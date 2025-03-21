@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using System.IO;
 
 public class MainManager : MonoBehaviour
 {
@@ -11,17 +12,33 @@ public class MainManager : MonoBehaviour
     public Rigidbody Ball;
 
     public Text ScoreText;
+    public Text BestScoreText;
     public GameObject GameOverText;
     
     private bool m_Started = false;
-    private int m_Points;
-    
+    private int CounterPoints;
+    public int MaxPoints;
+
     private bool m_GameOver = false;
 
-    
+    public static MainManager Instance;
+
+    private void Awake()
+    {
+        if (Instance != null)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+    }
+
     // Start is called before the first frame update
     void Start()
     {
+        MaxPoints = SaveDataManager.Instance.LoadScore();
+        BestScoreText.text = $"Best Score : {SaveDataManager.Instance.LoadName()} : {SaveDataManager.Instance.LoadScore()}";
+
         const float step = 0.6f;
         int perLine = Mathf.FloorToInt(4.0f / step);
         
@@ -64,12 +81,19 @@ public class MainManager : MonoBehaviour
 
     void AddPoint(int point)
     {
-        m_Points += point;
-        ScoreText.text = $"Score : {m_Points}";
+        CounterPoints += point;
+        ScoreText.text = $"Score : {CounterPoints}";
     }
 
     public void GameOver()
     {
+        if (MaxPoints < CounterPoints)
+        {
+            MaxPoints = CounterPoints;
+            SaveDataManager.Instance.SaveName();
+            SaveDataManager.Instance.SaveScore();
+            BestScoreText.text = $"Best Score : {SaveDataManager.Instance.LoadName()} : {SaveDataManager.Instance.LoadScore()}";
+        }
         m_GameOver = true;
         GameOverText.SetActive(true);
     }
